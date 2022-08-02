@@ -1,6 +1,7 @@
 package main
 
 import (
+	"math"
 	"math/rand"
 )
 
@@ -16,4 +17,17 @@ func (bandit *Bandit) pull() bool {
 		bandit.wins += 1
 	}
 	return win
+}
+
+func (bandit *Bandit) getPullsNumber(alpha float64) int {
+	// Вычисление количества дерганий за руку
+	// Необходимое для получения хотя бы одной награды
+	// С вероятностью [bandit.probability] в [(1-alpha)]% случаев
+	var q float64 = float64(1 - bandit.probability)
+	var pullsNumber int = int(math.Log(alpha) / math.Log(q))
+	return pullsNumber
+}
+
+func (bandit *Bandit) getDiscountedReward() float32 {
+	return bandit.reward * float32(bandit.wins) / float32(bandit.games)
 }
