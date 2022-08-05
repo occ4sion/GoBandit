@@ -23,7 +23,7 @@ func main() {
 	fmt.Print("~~~ Количество бандитов: ")
 	fmt.Scan(&number)
 	for budget <= number {
-		fmt.Printf("~~~ Бюджет на каждый раунд (минимум $%d): ", number)
+		fmt.Printf("~~~ Бюджет на каждый раунд (минимум $%d): ", number+1)
 		fmt.Scan(&budget)
 	}
 
@@ -35,12 +35,17 @@ func main() {
 
 	timeit()
 
-	number = solve(budget)
-	if number == -1 {
-		fmt.Println("Бюджет оказался слишком мал")
-	} else {
-		fmt.Println("Максимальный выигрыш даст бандит №", number)
-		getInfo(0.05, number)
+	solutions := map[string]int{
+		"Невзвешенный метод": solve(budget, false),
+		"Взвешенный метод":   solve(budget, true),
+	}
+	for method, index := range solutions {
+		if index == -1 {
+			fmt.Println("Бюджет оказался слишком мал")
+		} else {
+			fmt.Printf("%s посчитал, что максимальный выигрыш даст бандит №%d\n", method, index)
+			getInfo(0.05, index)
+		}
 	}
 
 	for {
@@ -88,53 +93,66 @@ func makeBandits(number int) {
 	}
 }
 
-func solve(budget int) int {
+func solve(budget int, weighted bool) int {
 	var bandit *Bandit
 
 	var weights []float32 = make([]float32, len(bandits))
-	var winners []bool = make([]bool, len(bandits))
 
 	var maxDiscountSum, maxSum, Sum float32
-	count := len(winners)
 
-	for index := range winners {
-		winners[index] = true
+	var winner, round int
+
+	count := len(weights)
+
+	for index := range weights {
 		Sum += bandits[index].reward
 	}
-	for index := range weights {
-		weights[index] = bandits[index].reward / Sum
+	if weighted {
+		for index := range weights {
+			weights[index] = bandits[index].reward / Sum
+		}
+	} else {
+		for index := range weights {
+			weights[index] = 1
+		}
 	}
 
 	Sum = 0
+	winner = -1
 
 	for count > 1 {
 
 		pulls := budget / count
 
-		for index := range winners {
+		round++
+
+		fmt.Printf("Раунд %d. Бандитов осталось %d.\n", round, count)
+
+		for index := range weights {
+			if weights[index] == 0 {
+				continue
+			}
+			Sum = 0
+
 			bandit = &bandits[index]
 
 			for i := 0; i < pulls; i++ {
-				bandit.pull()
+				if bandit.pull() {
+					Sum += bandit.reward
+				}
 			}
 
-			Sum = weights[index] * bandit.getDiscountedReward()
+			Sum *= weights[index]
 			if Sum > maxSum {
 				maxSum = Sum
+				winner = index
 			}
 			if Sum < maxDiscountSum {
-				winners[index] = false
+				weights[index] = 0
 				count -= 1
 			}
 		}
 		maxDiscountSum, maxSum = maxSum, 0
-		println()
-	}
-	var winner int = -1
-	for index, win := range winners {
-		if win {
-			winner = index
-		}
 	}
 	return winner
 }

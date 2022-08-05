@@ -25,9 +25,16 @@ func (bandit *Bandit) getPullsNumber(alpha float64) int {
 	// С вероятностью [bandit.probability] в [(1-alpha)]% случаев
 	var q float64 = float64(1 - bandit.probability)
 	var pullsNumber int = int(math.Log(alpha) / math.Log(q))
+	if pullsNumber == 0 {
+		pullsNumber++
+	}
 	return pullsNumber
 }
 
-func (bandit *Bandit) getDiscountedReward() float32 {
+func (bandit *Bandit) getGamesReward() float32 {
 	return bandit.reward * float32(bandit.wins) / float32(bandit.games)
+}
+
+func (bandit *Bandit) getDiscountedReward() float32 {
+	return bandit.reward * bandit.probability
 }
