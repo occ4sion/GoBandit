@@ -31,8 +31,12 @@ func (bandit *Bandit) getPullsNumber(alpha float64) int {
 	return pullsNumber
 }
 
+func (bandit *Bandit) getPosterior() float32 {
+	return float32(bandit.wins) / float32(bandit.games)
+}
+
 func (bandit *Bandit) getGamesReward() float32 {
-	return bandit.reward * float32(bandit.wins) / float32(bandit.games)
+	return bandit.reward * bandit.getPosterior()
 }
 
 func (bandit *Bandit) getDiscountedReward() float32 {
